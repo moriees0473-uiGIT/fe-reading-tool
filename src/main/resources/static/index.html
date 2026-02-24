@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>FE Reading Tool</title>
+<style>
+.highlight {
+  background: yellow;
+}
+span {
+  font-size: 22px;
+  margin-right: 5px;
+}
+</style>
+</head>
+<body>
+
+<h2>基本情報問題 読解支援ツール</h2>
+
+<textarea id="text" rows="4" cols="60">
+データベース管理システムを設計する。
+</textarea><br><br>
+
+<button onclick="start()">再生</button>
+
+<hr>
+<div id="output"></div>
+
+<script>
+async function start() {
+
+  const text = document.getElementById("text").value;
+
+  const response = await fetch("/api/tokenize", {
+    method: "POST",
+    headers: { "Content-Type": "text/plain" },
+    body: text
+  });
+
+  const words = await response.json();
+
+  const output = document.getElementById("output");
+  output.innerHTML = "";
+
+  words.forEach((w, i) => {
+    const span = document.createElement("span");
+    span.textContent = w;
+    span.id = "w" + i;
+    output.appendChild(span);
+  });
+
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = "ja-JP";
+
+  let index = 0;
+
+  utter.onboundary = function(event) {
+    if (event.name === "word") {
+      const el = document.getElementById("w" + index);
+      if (el) el.classList.add("highlight");
+      index++;
+    }
+  };
+
+  speechSynthesis.speak(utter);
+}
+</script>
+
+</body>
+</html>
